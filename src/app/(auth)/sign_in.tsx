@@ -1,3 +1,5 @@
+
+
 import { useAuth, useSignIn } from "@clerk/expo";
 import React from "react";
 import tw from "twrnc";
@@ -30,6 +32,7 @@ const SignIn = () => {
   }
 
   const onSignInPress = async () => {
+  try {
     const { error } = await signIn.password({
       emailAddress: email,
       password,
@@ -40,13 +43,13 @@ const SignIn = () => {
       return;
     }
 
-    if (!error) await signIn.mfa.sendEmailCode();
+    console.log("SignIn Status:", signIn.status);
 
     if (signIn.status === "complete") {
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) {
-            console.log(session?.currentTask);
+            console.log(session.currentTask);
             return;
           }
 
@@ -58,21 +61,28 @@ const SignIn = () => {
       await signIn.mfa.sendPhoneCode();
     } else if (signIn.status === "needs_client_trust") {
       const emailCodeFactor = signIn.supportedSecondFactors.find(
-        (factor) => factor.strategy === "email_code",
+        (factor) => factor.strategy === "email_code"
       );
 
       if (emailCodeFactor) {
         await signIn.mfa.sendEmailCode();
+
+        router.push({
+          pathname: "/verify_email",
+          params: {
+            email,
+            mode: "signin",
+          },
+        });
       }
     } else {
-      console.error("Sign_In attempt mot complete:", signIn);
+      console.error("Sign in attempt not complete:", signIn.status);
     }
-
-    router.push({
-      pathname: "/verify_email",
-      params: { email },
-    });
-  };
+  } catch (err: any) {
+    console.error(err);
+    alert(err?.message || "Sign in failed");
+  }
+};
 
   const onVerifyPress = async () => {
     await signIn.mfa.verifyEmailCode({ code });
@@ -92,49 +102,7 @@ const SignIn = () => {
     }
   };
 
-  if (signIn.status === "needs_client_trust") {
-    // return <View className="flex-1 justify-center px-6 py-12">
 
-    //           <Image source={require('../../../assets/images/logo.png')}
-    //           style={styles.image} resizeMode="contain"
-    //           ></Image>
-    //           <Text className="text-gray-800 font-bold text-3xl mb-2 ">Verify your Account {" "}</Text>
-    //           <Text className="text-gray-500 mb-8">We've sent a verification code to {email}.</Text>
-
-    //           <View className="flex-row gap-3 mb-4">
-    //              <TextInput placeholder="Enter Verification Code" keyboardType="number-pad" placeholderTextColor="#9ca3af"  style={tw`flex-1 border border-gray-300 rounded-xl px-4 py-3`} autoCapitalize="words" value={code} onChangeText={setCode} />
-
-    //           </View>
-
-    //           {errors.fields.code && (
-    //             <Text style={tw`text-red-500 mb-4`}>
-    //               {errors.fields.code.message}
-    //             </Text>
-    //           )}
-
-    //            <TouchableOpacity onPress={onVerifyPress} disabled={isLoading} style={tw`w-full bg-blue-600 py-4 rounded-xl items-center mb-4`}>
-    //        {isLoading? (
-    //         <ActivityIndicator color="white" />
-    //        ):(
-    //         <Text style={tw`text-white text-base font-bold`}>Verify</Text>
-    //        )
-    //        }
-
-    //       </TouchableOpacity>
-    //        <TouchableOpacity onPress={()=>signIn.verifications.sendEmailCode()} disabled={isLoading} >
-    //        {isLoading? (
-    //         <ActivityIndicator color="white" />
-    //        ):(
-    //         <Text style={tw`text-blue-600 text-base `}>I need a new code</Text>
-    //        )
-    //        }
-
-    //       </TouchableOpacity>
-
-    //          </View>
-
-    <VerifyEmail />;
-  }
 
   return (
     <ScrollView

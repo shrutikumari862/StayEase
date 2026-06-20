@@ -39,9 +39,12 @@ const SignUp = () => {
 
   if(!error) await signUp.verifications.sendEmailCode();
 
-  router.push({
-  pathname: '/verify_email',
-  params: { email },
+ router.push({
+  pathname: "/verify_email",
+  params: {
+    email,
+    mode: "signup",
+  },
 });
 
 
